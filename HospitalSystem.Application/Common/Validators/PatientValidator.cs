@@ -2,14 +2,15 @@ using FluentValidation;
 using HospitalSystem.Application.Common.Interfaces;
 using HospitalSystem.Application.Patients.DTOs;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace HospitalSystem.Application.Common.Validators;
 
-public class CreatePatientDtoValidator : AbstractValidator<CreatePatientDto>
+public class PatientValidator : AbstractValidator<CreatePatientDto>
 {
     private readonly IApplicationDbContext _context;
 
-    public CreatePatientDtoValidator(IApplicationDbContext context)
+    public PatientValidator(IApplicationDbContext context)
     {
         _context = context;
         // IDENTITY
@@ -44,9 +45,9 @@ public class CreatePatientDtoValidator : AbstractValidator<CreatePatientDto>
         
 
     }    
-    private async Task<bool>BeUniqueNationalAsync(string nationalId, CancellationToken ct)
+    private async Task<bool> BeUniqueNationalIdAsync(string nationalId, CancellationToken ct)
     {
-        return !await _context.Patients.AnyAsync(p => p.NationalId == nationalId,ct);
+        return !await _context.Patients.AnyAsync(p => p.NationalId == nationalId, ct);
 
     }
     private async Task<bool> BeUniquePhoneNumberAsync(string phoneNumber, CancellationToken ct)
@@ -54,10 +55,30 @@ public class CreatePatientDtoValidator : AbstractValidator<CreatePatientDto>
         return !await _context.Patients.AnyAsync(p => p.PhoneNumber == phoneNumber, ct);
         
     }
-    private async Task<bool>BeUniqueEmailAsync(string email, CancellationToken ct)
+    private async Task<bool> BeUniqueEmailAsync(string email, CancellationToken ct)
     {
         if(string.IsNullOrEmpty(email)) return true;
         return !await _context.Patients.AnyAsync(p => p.Email == email, ct);
+    }
+
+    // Public static method for CustomValidation attribute
+    public static ValidationResult ValidateEmailUniqueness(string email, ValidationContext context)
+    {
+        if (string.IsNullOrEmpty(email))
+        {
+            return ValidationResult.Success;
+        }
+
+        // Note: This is a synchronous validation method. For async validation, 
+        // it's recommended to use FluentValidation rules instead of CustomValidation attribute.
+        // This method serves as a placeholder for immediate format validation.
+        
+        if (!System.Text.RegularExpressions.Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        {
+            return new ValidationResult("Invalid email format");
+        }
+
+        return ValidationResult.Success;
     }
 
     
